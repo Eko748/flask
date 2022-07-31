@@ -15,8 +15,8 @@ class User(db.Model):
     def __repr__(self):
         return '<User {}>'.format(self.name)
     
-    def setPassword(self, password):
+    def setPassword(self,password):
         self.password = generate_password_hash(password)
         
-    def checkPassword(self, password):
+    def checkPassword(self,password):
         return check_password_hash(self.password, password)
