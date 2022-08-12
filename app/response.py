@@ -15,3 +15,10 @@ def badRequest(values, message):
     }
     
     return make_response(jsonify(res)), 400
+
+def emailInvalid():
+    return 'Gagal', 400
+
+
+def passwordInvalid():
+    return 'Password Gagal', 400

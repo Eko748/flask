@@ -4,9 +4,9 @@ from importlib.metadata import files
 from os import access
 from app.model.user import User
 from app.model.gambar import Gambar
-
+# from flask import Response, redirect, request, render_template, url_for, flash, session
 from app import response, app, db, uploadconfig
-from flask import request
+from flask import request, render_template
 from flask_jwt_extended import *
 from werkzeug.utils import secure_filename
 import uuid
@@ -76,6 +76,36 @@ def singleObject(data):
     return data
 
 def login():
+    try:
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return response.badRequest([], 'Email tidak terdaftar')
+        
+        if not user.checkPassword(password):
+            return response.badRequest([], 'Kombinasi Password Salah!')
+        
+        data = singleObject(user)
+        
+        expires = datetime.timedelta(days=7)
+        expires_refresh = datetime.timedelta(days=7)
+        
+        acces_token = create_access_token(data, fresh=True, expires_delta= expires)
+        refresh_token = create_refresh_token(data, expires_delta=expires_refresh)
+        
+        return response.success({
+            "data" : data,
+            "access_token" : acces_token,
+            "refresh_token" : refresh_token,
+        }, "Sukses Login!")
+        
+    except Exception as e:
+        print(e)
+        
+def signin():
     try:
         email = request.form.get('email')
         password = request.form.get('password')

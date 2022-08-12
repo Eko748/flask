@@ -1,67 +1,105 @@
+import datetime
 import os
 from PIL import Image
-
+from app.model.user import User
 import numpy as np
 import cv2
+from flask_jwt_extended import *
+from app.face_recognition import face_recognition, generate_dataset
 from app import app, response, mycursor, mydb
-from flask import Response, redirect, request, render_template, url_for
+from flask import Response, redirect, request, render_template, url_for, flash, session
 from flask import jsonify
+from app.controller.login import LoginController
 from app.controller import DosenController
 from app.controller import UserController
 from flask_jwt_extended import current_user, get_jwt_identity
 from flask_jwt_extended import jwt_required
-             
-def face_recognition():  # generate frame by frame from camera
-    def draw_boundary(img, classifier, scaleFactor, minNeighbors, color, text, clf):
-        gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        features = classifier.detectMultiScale(gray_image, scaleFactor, minNeighbors)
+from werkzeug.security import check_password_hash, generate_password_hash
+from flask_login import login_required, LoginManager
+
+# login_manager = LoginManager()
+# login_manager.init_app(app)
+# login_manager.login_view = 'login'
+
+
+# @login_manager.user_loader
+# def load_user(user_id):
+#     return User.query.get(int(user_id))
+@app.route('/')
+def wellcome():
+    return 'Halo'
+
+@app.route('/menu')
+def menus():
+    return LoginController.menu()
+
+@app.route('/registrasi', methods=('GET','POST'))
+def regis():
+    return LoginController.registrasi()
  
-        coords = []
+@app.route('/login', methods=('GET', 'POST'))
+def logins():
+    return LoginController.login()
+
+@app.route('/logout')
+def logouts():
+    return LoginController.logout()
+
+@app.route('/person')
+def home():
+    mycursor.execute("select prs_nbr, prs_name, prs_skill, prs_active, prs_added from prs_mstr")
+    data = mycursor.fetchall()
  
-        for (x, y, w, h) in features:
-            cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
-            id, pred = clf.predict(gray_image[y:y + h, x:x + w])
-            confidence = int(100 * (1 - pred / 300))
- 
-            mycursor.execute("select b.prs_name "
-                             "  from img_dataset a "
-                             "  left join prs_mstr b on a.img_person = b.prs_nbr "
-                             " where img_id = " + str(id))
-            s = mycursor.fetchone()
-            s = '' + ''.join(s)
- 
-            if confidence > 70:
-                cv2.putText(img, s, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 1, cv2.LINE_AA)
-            else:
-                cv2.putText(img, "UNKNOWN", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
- 
-            coords = [x, y, w, h]
-        return coords
- 
-    def recognize(img, clf, faceCascade):
-        coords = draw_boundary(img, faceCascade, 1.1, 10, (255, 255, 0), "Face", clf)
-        return img
- 
-    faceCascade = cv2.CascadeClassifier("D:/Face/flask/resources/haarcascade_frontalface_default.xml")
-    clf = cv2.face.LBPHFaceRecognizer_create()
-    clf.read("D:/Face/flask/classifier.xml")
- 
-    wCam, hCam = 500, 400
- 
-    cap = cv2.VideoCapture(0)
-    cap.set(3, wCam)
-    cap.set(4, hCam)
- 
-    while True:
-        ret, img = cap.read()
-        img = recognize(img, clf, faceCascade)
- 
-        frame = cv2.imencode('.jpg', img)[1].tobytes()
-        yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
- 
-        key = cv2.waitKey(1)
-        if key == 27:
-            break
+    return render_template('index.html', data=data)
+
+# @app.route('/', methods=('GET', 'POST'))
+# def login():
+#     if request.method == 'POST':
+#         email = request.form['email']
+#         password = request.form['password']
+        
+#         #cek data username
+#         # cursor = mydb.cursor()
+#         mycursor.execute('SELECT * FROM user WHERE email=%s',(email, ))
+#         akun = mycursor.fetchone()
+#         if akun is None:
+#             flash('Login Gagal, Cek Username Anda','danger')
+#         elif not check_password_hash(akun[3], password):
+#             flash('Login gagal, Cek Password Anda', 'danger')
+#         else:
+#             # session['loggedin'] = True
+#             session['name'] = akun[1]
+#             session['level'] = akun[4]
+#             return redirect(url_for('index'))
+#     return render_template('login.html')
+
+# @app.route('/', methods=('GET', 'POST'))
+# def signins():
+#     if request.method == 'POST':
+#         email = request.form.get('email')
+#         password = request.form.get('password')
+        
+#         user = User.query.filter_by(email=email).first()
+        
+#         if not user:
+#             return response.emailInvalid()
+        
+#         if not user.checkPassword(password):
+#             return response.passwordInvalid()
+        
+#         # data = DosenController.singleObject(user)
+        
+#         expires = datetime.timedelta(days=7)
+#         expires_refresh = datetime.timedelta(days=7)
+        
+#         # acces_token = create_access_token(fresh=True, expires_delta= expires)
+#         # refresh_token = create_refresh_token(expires_delta=expires_refresh)
+#         # acces_token = request
+        
+#         return redirect('/person')
+#     else:
+#         return render_template('login.html')
+
 
 @app.route('/train_classifier/<nbr>')
 def train_classifier(nbr):
@@ -87,72 +125,16 @@ def train_classifier(nbr):
  
     return redirect('/')
  
- 
-@app.route('/')
-def home():
-    mycursor.execute("select prs_nbr, prs_name, prs_skill, prs_active, prs_added from prs_mstr")
-    data = mycursor.fetchall()
- 
-    return render_template('index.html', data=data)
- 
 @app.route('/addprsn')
 def addprsn():
     mycursor.execute("select ifnull(max(prs_nbr) + 1, 101) from prs_mstr")
     row = mycursor.fetchone()
     nbr = row[0]
     # print(int(nbr))
- 
-    return render_template('addprsn.html', newnbr=int(nbr))
- 
-
-def generate_dataset(nbr):
-    face_classifier = cv2.CascadeClassifier("D:/Face/flask/resources/haarcascade_frontalface_default.xml")
- 
-    def face_cropped(img):
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        faces = face_classifier.detectMultiScale(gray, 1.3, 5)
-        # scaling factor=1.3
-        # Minimum neighbor = 5
- 
-        if faces is ():
-            return None
-        for (x, y, w, h) in faces:
-            cropped_face = img[y:y + h, x:x + w]
-        return cropped_face
- 
-    cap = cv2.VideoCapture(0)
- 
-    mycursor.execute("select ifnull(max(img_id), 0) from img_dataset")
-    row = mycursor.fetchone()
-    lastid = row[0]
- 
-    img_id = lastid
-    max_imgid = img_id + 100
-    count_img = 0
- 
-    while True:
-        ret, img = cap.read()
-        if face_cropped(img) is not None:
-            count_img += 1
-            img_id += 1
-            face = cv2.resize(face_cropped(img), (200, 200))
-            face = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)
- 
-            file_name_path = "dataset/"+nbr+"."+ str(img_id) + ".jpg"
-            cv2.imwrite(file_name_path, face)
-            cv2.putText(face, str(count_img), (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
- 
-            mycursor.execute("""INSERT INTO `img_dataset` (`img_id`, `img_person`) VALUES
-                                ('{}', '{}')""".format(img_id, nbr))
-            mydb.commit()
- 
-            frame = cv2.imencode('.jpg', face)[1].tobytes()
-            yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
- 
-            if cv2.waitKey(1) == 13 or int(img_id) == int(max_imgid):
-                break
-                cap.release()
-                cv2.destroyAllWindows() 
+    if 'loggedin' in session:
+        return render_template('addprsn.html', newnbr=int(nbr)) 
+    flash('Harap Login dulu','danger')
+    return redirect(url_for('logins'))
 
 @app.route('/addprsn_submit', methods=['POST'])
 def addprsn_submit():
@@ -185,15 +167,18 @@ def video_feed():
 def fr_page():
     return render_template('fr_page.html')
 
+
+
+
 # -------------------------------- API Routes -------------------------------- #
 
-@app.route('/protected', methods=['GET'])
+@app.route('/api/protected', methods=['GET'])
 @jwt_required()
 def protected():
     current_user = get_jwt_identity()
     return response.success(current_user, 'Sukses')
 
-@app.route('/dosen', methods=['GET', 'POST'])
+@app.route('/api/dosen', methods=['GET', 'POST'])
 @jwt_required()
 def dosens():
     if request.method == 'GET':
@@ -206,15 +191,15 @@ def dosens():
 def pagination():
     return DosenController.paginate()
     
-@app.route('/file-upload', methods=['POST'])
+@app.route('/api/file-upload', methods=['POST'])
 def uploads():
     return UserController.upload()
     
-@app.route('/createadmin', methods=['POST'])
+@app.route('/api/createadmin', methods=['POST'])
 def admins():
     return UserController.buatAdmin()
 
-@app.route('/dosen/<id>', methods=['GET', 'PUT', 'DELETE'])
+@app.route('/api/dosen/<id>', methods=['GET', 'PUT', 'DELETE'])
 def dosensDetail(id):
     if request.method == 'GET':
         return DosenController.detail(id)
@@ -223,6 +208,6 @@ def dosensDetail(id):
     elif request.method == 'DELETE':
         return DosenController.hapus(id)
     
-@app.route('/login', methods=['POST'])
-def logins():
+@app.route('/api/login', methods=['POST'])
+def apilogins():
     return UserController.login()
