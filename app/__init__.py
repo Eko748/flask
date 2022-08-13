@@ -7,11 +7,16 @@ from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 import mysql.connector
 
+secretKey = 'cbn'
+host = 'localhost'
+user = 'root'
+database = 'belajarflask_db'
+
 mydb = mysql.connector.connect(
-    host="localhost",
-    user="root",
+    host= host,
+    user= user,
     passwd="",
-    database="belajarflask_db"
+    database= database
 )
 mycursor = mydb.cursor()
 
@@ -21,11 +26,11 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-app.secret_key = 'cbn'
-app.config['MYSQL_HOST'] ='localhost'
-app.config['MYSQL_USER'] ='root'
+app.secret_key = secretKey
+app.config['MYSQL_HOST'] = host
+app.config['MYSQL_USER'] = user
 app.config['MYSQL_PASSWORD'] =''
-app.config['MYSQL_DB'] ='belajarflask_db'
+app.config['MYSQL_DB'] = database
 mysql = MySQL(app)
 
 jwt = JWTManager(app)
