@@ -46,8 +46,8 @@ def login():
             session['loggedin'] = True
             session['username'] = akun[1]
             session['level'] = akun[4]
-            return redirect(url_for('add_persons'))
-    return render_template('login.html')
+            return redirect(url_for('persons'))
+    return render_template('auth/login.html')
 
 #logout
 def logout():

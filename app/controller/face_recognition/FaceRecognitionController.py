@@ -2,14 +2,14 @@ import os
 import numpy as np
 import cv2
 from PIL import Image
-from app import app, response, mycursor, mydb
+from app import mycursor, mydb
 from flask import Response, redirect, request, render_template, url_for, flash, session
 from app.face_recognition import face_recognition, generate_dataset
 
-def home():
+def person():
     mycursor.execute("select prs_nbr, prs_name, prs_skill, prs_active, prs_added from prs_mstr")
     data = mycursor.fetchall()
-    return render_template('index.html', data=data)
+    return render_template('admin/pages/face_recognition/person.html', data=data)
 
 def add_person():
     mycursor.execute("select ifnull(max(prs_nbr) + 1, 101) from prs_mstr")
@@ -17,7 +17,7 @@ def add_person():
     nbr = row[0]
     # print(int(nbr))
     if 'loggedin' in session:
-        return render_template('add_person.html', newnbr=int(nbr)) 
+        return render_template('admin/pages/face_recognition/add_person.html', newnbr=int(nbr)) 
     flash('Harap Login dulu','danger')
     return redirect(url_for('logins'))
 
@@ -30,7 +30,6 @@ def add_person_submit():
                     ('{}', '{}', '{}')""".format(prsnbr, prsname, prsskill))
     mydb.commit()
  
-    # return redirect(url_for('home'))
     return redirect(url_for('video_feed_dataset_pages', prs=prsnbr))
 
 def video_feed():
@@ -42,10 +41,10 @@ def video_feed_dataset(nbr):
     return Response(generate_dataset(nbr), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 def video_feed_dataset_page(prs):
-    return render_template('gendataset.html', prs=prs)
+    return render_template('admin/pages/face_recognition/gendataset.html', prs=prs)
 
 def frame_page():
-    return render_template('frame_page.html')
+    return render_template('admin/pages/face_recognition/frame_page.html')
 
 def train_classifier(nbr):
     dataset_dir = "D:/Face/flask/dataset"

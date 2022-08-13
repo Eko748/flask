@@ -1,22 +1,11 @@
-import datetime
-import os
-from PIL import Image
-from app.model.user import User
-import numpy as np
-import cv2
 from flask_jwt_extended import *
-from app.face_recognition import face_recognition, generate_dataset
-from app import app, response, mycursor, mydb
-from flask import Response, redirect, request, render_template, url_for, flash, session
-from flask import jsonify
+from app import app, response
+from flask import request
 from app.controller.auth import LoginController
 from app.controller.face_recognition import FaceRecognitionController
-from app.controller.api import DosenController
-from app.controller.api import UserController
+from app.controller.api import DosenController, UserController
 from flask_jwt_extended import current_user, get_jwt_identity
 from flask_jwt_extended import jwt_required
-from werkzeug.security import check_password_hash, generate_password_hash
-from flask_login import login_required, LoginManager
 
 # To Do List
 @app.route('/')
@@ -43,8 +32,8 @@ def logouts():
 
 # FaceRecognitionController
 @app.route('/person')
-def homes():
-    return FaceRecognitionController.home()
+def persons():
+    return FaceRecognitionController.person()
 
 @app.route('/train_classifier/<nbr>')
 def train_classifiers(nbr):
