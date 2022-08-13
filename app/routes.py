@@ -1,6 +1,7 @@
+from app.model.user import User
 from flask_jwt_extended import *
 from app import app, response
-from flask import request
+from flask import request, render_template
 from app.controller.auth import LoginController
 from app.controller.face_recognition import FaceRecognitionController
 from app.controller.api import DosenController, UserController
@@ -11,6 +12,16 @@ from flask_jwt_extended import jwt_required
 @app.route('/')
 def wellcome():
     return 'Halo'
+
+@app.route('/user')
+def ajax():
+    return render_template('ajax_table.html', title='Ajax Table')
+
+
+@app.route('/api/data')
+def data():
+    return {'data': [user.to_dict() for user in User.query]}
+
 
 # LoginController
 @app.route('/menu')
