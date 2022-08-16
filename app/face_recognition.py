@@ -1,5 +1,4 @@
 import cv2
-import mysql.connector
 from app import mycursor, mydb
 
 
@@ -13,7 +12,7 @@ def face_recognition():  # generate frame by frame from camera
         for (x, y, w, h) in features:
             cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
             id, pred = clf.predict(gray_image[y:y + h, x:x + w])
-            confidence = int(100 * (1 - pred / 300))
+            confidence = int(100 * (1 - pred / 100))
  
             mycursor.execute("select b.prs_name "
                              "  from img_dataset a "
@@ -22,7 +21,7 @@ def face_recognition():  # generate frame by frame from camera
             s = mycursor.fetchone()
             s = '' + ''.join(s)
  
-            if confidence > 70:
+            if confidence > 30:
                 cv2.putText(img, s, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 1, cv2.LINE_AA)
             else:
                 cv2.putText(img, "UNKNOWN", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)

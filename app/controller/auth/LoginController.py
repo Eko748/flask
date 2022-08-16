@@ -1,6 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-from app import mysql
+from app import mysql, app
 from werkzeug.security import check_password_hash, generate_password_hash
+from app.model.auth.users import User
+
+
 
 def menu():
     if 'loggedin' in session:
@@ -18,10 +21,10 @@ def registrasi():
 
         #cek username atau email
         cursor = mysql.connection.cursor()
-        cursor.execute('SELECT * FROM user WHERE username=%s OR email=%s',(username, email, ))
+        cursor.execute('SELECT * FROM users WHERE username=%s OR email=%s',(username, email, ))
         akun = cursor.fetchone()
         if akun is None:
-            cursor.execute('INSERT INTO user VALUES (NULL, %s, %s, %s, %s)', (username, email, generate_password_hash(password), level))
+            cursor.execute('INSERT INTO users VALUES (NULL, %s, %s, %s, %s)', (username, email, generate_password_hash(password), level))
             mysql.connection.commit()
             flash('Registrasi Berhasil','success')
         else :
@@ -36,7 +39,7 @@ def login():
         
         #cek data username
         cursor = mysql.connection.cursor()
-        cursor.execute('SELECT * FROM user WHERE email=%s',(email, ))
+        cursor.execute('SELECT * FROM users WHERE email=%s',(email, ))
         akun = cursor.fetchone()
         if akun is None:
             flash('Login Gagal, Cek Username Anda','danger')
@@ -44,9 +47,16 @@ def login():
             flash('Login gagal, Cek Password Anda', 'danger')
         else:
             session['loggedin'] = True
-            session['username'] = akun[1]
-            session['level'] = akun[4]
-            return redirect(url_for('persons'))
+            session['username'] = akun[4]
+            session['level'] = akun[5]
+            if session['level'] == 'ADMIN':
+                flash('Login Admin Successfully', 'success')
+                return redirect(url_for('persons'))
+            elif session['level'] == 'EMPLOYEE':
+                flash('Login Employee Successfully', 'success')
+                return redirect(url_for('ajax'))
+            else:
+                return redirect(url_for('data'))
     return render_template('auth/login.html')
 
 #logout

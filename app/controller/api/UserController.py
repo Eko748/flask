@@ -2,7 +2,7 @@ import email
 import imp
 from importlib.metadata import files
 from os import access
-from app.model.user import User
+from app.model.auth.users import User
 from app.model.gambar import Gambar
 # from flask import Response, redirect, request, render_template, url_for, flash, session
 from app import response, app, db, uploadconfig
@@ -50,12 +50,12 @@ def   upload():
 
 def buatAdmin():
     try:
-        name = request.form.get('name')
+        active = 1
         email = request.form.get('email')
         password = request.form.get('password')
-        level = 1
+        username = request.form.get('username')
         
-        users = User(name=name, email=email, level=level)
+        users = User(active=active, email=email, password=password, username=username)
         users.setPassword(password)
         db.session.add(users)
         db.session.commit()

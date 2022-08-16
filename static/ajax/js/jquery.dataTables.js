@@ -11835,7 +11835,7 @@
 			 *      } );
 			 *    } );
 			 */
-			"sZeroRecords": "No matching records found"
+			"sZeroRecords": "Data tidak ditemukan!"
 		},
 	
 	

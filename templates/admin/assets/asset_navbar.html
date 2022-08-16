@@ -1,8 +1,9 @@
-<link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}" type="text/css">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css">
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='navbar/css/bootstrap.min.css') }}">
+{% endblock %}
 
-<script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
-<script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-
-<title>Face Recognition</title>
+{% block scripts %}
+<script src="{{ url_for('static', filename='navbar/js/jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='navbar/js/bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='navbar/js/bootstrap.bundle.min.js') }}"></script>
+{% endblock %}

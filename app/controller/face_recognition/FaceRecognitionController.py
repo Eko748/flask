@@ -9,15 +9,20 @@ from app.face_recognition import face_recognition, generate_dataset
 def person():
     mycursor.execute("select prs_nbr, prs_name, prs_skill, prs_active, prs_added from prs_mstr")
     data = mycursor.fetchall()
-    return render_template('admin/pages/face_recognition/person.html', data=data)
+    if 'loggedin' in session:
+        return render_template('admin/pages/face_recognition/person.html', data=data)
+    flash('Harap Login dulu','danger')
+    return redirect(url_for('logins'))
 
 def add_person():
     mycursor.execute("select ifnull(max(prs_nbr) + 1, 101) from prs_mstr")
     row = mycursor.fetchone()
+    mycursor.execute("select id, name_role from roles")
+    name_role = mycursor.fetchall()
     nbr = row[0]
     # print(int(nbr))
     if 'loggedin' in session:
-        return render_template('admin/pages/face_recognition/add_person.html', newnbr=int(nbr)) 
+        return render_template('admin/pages/face_recognition/add_person.html', newnbr=int(nbr), name_role=name_role) 
     flash('Harap Login dulu','danger')
     return redirect(url_for('logins'))
 
@@ -34,17 +39,29 @@ def add_person_submit():
 
 def video_feed():
     # Video streaming route. Put this in the src attribute of an img tag
-    return Response(face_recognition(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    if 'loggedin' in session:
+        return Response(face_recognition(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    flash('Harap Login dulu','danger')
+    return redirect(url_for('logins'))
 
 def video_feed_dataset(nbr):
     #Video streaming route. Put this in the src attribute of an img tag
-    return Response(generate_dataset(nbr), mimetype='multipart/x-mixed-replace; boundary=frame')
+    if 'loggedin' in session:
+        return Response(generate_dataset(nbr), mimetype='multipart/x-mixed-replace; boundary=frame')
+    flash('Harap Login dulu','danger')
+    return redirect(url_for('logins'))
 
 def video_feed_dataset_page(prs):
-    return render_template('admin/pages/face_recognition/gendataset.html', prs=prs)
+    if 'loggedin' in session:
+        return render_template('admin/pages/face_recognition/gendataset.html', prs=prs)
+    flash('Harap Login dulu','danger')
+    return redirect(url_for('logins'))
 
 def frame_page():
-    return render_template('admin/pages/face_recognition/frame_page.html')
+    if 'loggedin' in session:
+        return render_template('admin/pages/face_recognition/frame_page.html')
+    flash('Harap Login dulu','danger')
+    return redirect(url_for('logins'))
 
 def train_classifier(nbr):
     dataset_dir = "D:/Face/flask/dataset"

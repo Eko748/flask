@@ -10,7 +10,7 @@ import mysql.connector
 secretKey = 'cbn'
 host = 'localhost'
 user = 'root'
-database = 'belajarflask_db'
+database = 'face_db'
 
 mydb = mysql.connector.connect(
     host= host,
@@ -35,5 +35,5 @@ mysql = MySQL(app)
 
 jwt = JWTManager(app)
 
-from app.model import user, dosen, mahasiswa, gambar
+from app.model.auth import roles, users, user_roles
 from app import routes
